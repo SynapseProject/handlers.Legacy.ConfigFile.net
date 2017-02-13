@@ -30,7 +30,6 @@ public class ConfigFileHandler : HandlerRuntimeBase
         seqNo = 0;
         OnProgress("Execute", "Starting", StatusType.Running, startInfo.InstanceId, seqNo++);
         wf.ExecuteAction(startInfo.IsDryRun);
-        OnProgress("Execute", "Completed", StatusType.Complete, startInfo.InstanceId, seqNo++);
 
         return new ExecuteResult() { Status = StatusType.Complete };
     }
