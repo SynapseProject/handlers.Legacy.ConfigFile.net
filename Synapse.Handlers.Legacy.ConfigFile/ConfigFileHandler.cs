@@ -21,7 +21,6 @@ public class ConfigFileHandler : HandlerRuntimeBase
         WorkflowParameters wfp = new WorkflowParameters();
         TextReader reader = new StringReader(startInfo.Parameters);
         wfp = (WorkflowParameters)ser.Deserialize(reader);
-        Console.WriteLine(wfp.ToString());
 
         Workflow wf = new Workflow(wfp);
 
@@ -30,8 +29,7 @@ public class ConfigFileHandler : HandlerRuntimeBase
 
         seqNo = 0;
         OnProgress("Execute", "Starting", StatusType.Running, startInfo.InstanceId, seqNo++);
-        wf.ExecuteAction();
-        OnProgress("Execute", "Completed", StatusType.Complete, startInfo.InstanceId, seqNo++);
+        wf.ExecuteAction(startInfo.IsDryRun);
 
         return new ExecuteResult() { Status = StatusType.Complete };
     }
