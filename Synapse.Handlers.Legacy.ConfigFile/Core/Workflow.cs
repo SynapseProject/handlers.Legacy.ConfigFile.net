@@ -31,7 +31,7 @@ namespace Synapse.Handlers.Legacy.ConfigFile
 
 		public WorkflowParameters Parameters { get { return _wfp; } set { _wfp = value as WorkflowParameters; } }
 
-		public void ExecuteAction()
+		public void ExecuteAction(bool isDryRun)
 		{
 			string context = "ExecuteAction";
 
@@ -52,7 +52,7 @@ namespace Synapse.Handlers.Legacy.ConfigFile
 
                 if (isValid)
                 {
-                    RunMainWorkflow();
+                    RunMainWorkflow(isDryRun);
                 }
                 else
                 {
@@ -72,7 +72,7 @@ namespace Synapse.Handlers.Legacy.ConfigFile
 
         }
 
-        public virtual void RunMainWorkflow()
+        public virtual void RunMainWorkflow(bool isDryRun)
         {
             try
             {
@@ -83,12 +83,12 @@ namespace Synapse.Handlers.Legacy.ConfigFile
                 {
                     OnStepProgress("RunMainWorkflow", "Processing Files Sequentially.");
                     foreach (FileType file in _wfp.Files)
-                        MungeFile(file);
+                        MungeFile(file, isDryRun);
                 }
                 else
                 {
                     OnStepProgress("RunMainWorkflow", "Processing Files In Parallel.");
-                    Parallel.ForEach(_wfp.Files, file => MungeFile(file));
+                    Parallel.ForEach(_wfp.Files, file => MungeFile(file, isDryRun));
                 }
             } catch (Exception e)
             {
@@ -99,7 +99,7 @@ namespace Synapse.Handlers.Legacy.ConfigFile
 
         }
 
-        public void MungeFile(FileType file)
+        public void MungeFile(FileType file, bool isDryRun)
         {
             // Parse Boolean Values
             file.Parse();
@@ -116,34 +116,47 @@ namespace Synapse.Handlers.Legacy.ConfigFile
             }
             if (file._CopySource == true) {
                 OnStepProgress("MungeFile", "Backing Up Source File To [" + file.Source + ".orig]");
-                File.Copy(file.Source, file.Source + ".orig", true);
+                if (isDryRun)
+                    OnStepProgress("MungeFile", "IsDryRun flag is set.  Source file backup has been skipped.");
+                else
+                    File.Copy(file.Source, file.Source + ".orig", true);
             }
 
             switch (file.Type)
             {
                 case ConfigType.XmlTransform:
                     OnStepProgress("MungeFile", "Starting XmlTransform From [" + file.Source + "] To [" + file.Destination + "]");
-                    Munger.XMLTransform(file.Source, file.Destination, file.SettingsFile.Value);
+                    Munger.XMLTransform(file.Source, file.Destination, file.SettingsFile.Value, isDryRun);
+                    if (isDryRun)
+                        OnStepProgress("MungeFile", "IsDryRun flag is set.  File will not be saved.");
                     OnStepProgress("MungeFile", "Finished XmlTransform From [" + file.Source + "] To [" + file.Destination + "]");
                     break;
                 case ConfigType.KeyValue:
                     OnStepProgress("MungeFile", "Starting KeyValue Replacement From [" + file.Source + "] To [" + file.Destination + "]");
-                    Munger.KeyValue(PropertyFile.Type.Java, file.Source, file.Destination, file.SettingsFile, file.Settings);
+                    Munger.KeyValue(PropertyFile.Type.Java, file.Source, file.Destination, file.SettingsFile, file.Settings, isDryRun);
+                    if (isDryRun)
+                        OnStepProgress("MungeFile", "IsDryRun flag is set.  File will not be saved.");
                     OnStepProgress("MungeFile", "Finished KeyValue Replacement From [" + file.Source + "] To [" + file.Destination + "]");
                     break;
                 case ConfigType.INI:
                     OnStepProgress("MungeFile", "Starting INI File Replacement From [" + file.Source + "] To [" + file.Destination + "]");
-                    Munger.KeyValue(PropertyFile.Type.Ini, file.Source, file.Destination, file.SettingsFile, file.Settings);
+                    Munger.KeyValue(PropertyFile.Type.Ini, file.Source, file.Destination, file.SettingsFile, file.Settings, isDryRun);
+                    if (isDryRun)
+                        OnStepProgress("MungeFile", "IsDryRun flag is set.  File will not be saved.");
                     OnStepProgress("MungeFile", "Finished INI File Replacement From [" + file.Source + "] To [" + file.Destination + "]");
                     break;
                 case ConfigType.XPath:
                     OnStepProgress("MungeFile", "Starting XPath Replacement From [" + file.Source + "] To [" + file.Destination + "]");
-                    Munger.XPath(file.Source, file.Destination, file.SettingsFile, file.Settings);
+                    Munger.XPath(file.Source, file.Destination, file.SettingsFile, file.Settings, isDryRun);
+                    if (isDryRun)
+                        OnStepProgress("MungeFile", "IsDryRun flag is set.  File will not be saved.");
                     OnStepProgress("MungeFile", "Finished XPath Replacement From [" + file.Source + "] To [" + file.Destination + "]");
                     break;
                 case ConfigType.Regex:
                     OnStepProgress("MungeFile", "Starting Regex Replacement From [" + file.Source + "] To [" + file.Destination + "]");
-                    Munger.RegexMatch(file.Source, file.Destination, file.SettingsFile, file.Settings);
+                    Munger.RegexMatch(file.Source, file.Destination, file.SettingsFile, file.Settings, isDryRun);
+                    if (isDryRun)
+                        OnStepProgress("MungeFile", "IsDryRun flag is set.  File will not be saved.");
                     OnStepProgress("MungeFile", "Finished Regex Replacement From [" + file.Source + "] To [" + file.Destination + "]");
                     break;
                 default:

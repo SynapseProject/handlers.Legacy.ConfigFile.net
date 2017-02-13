@@ -15,7 +15,7 @@ namespace Synapse.Handlers.Legacy.ConfigFile
 {
     class Munger
     {
-        static public void XMLTransform(String sourceFile, String destinationFile, String transformFile)
+        static public void XMLTransform(String sourceFile, String destinationFile, String transformFile, bool isDryRun=false)
         {
             String outFile = destinationFile;
             if (String.IsNullOrWhiteSpace(outFile))
@@ -33,12 +33,13 @@ namespace Synapse.Handlers.Legacy.ConfigFile
                 using (XmlTransformation xt = new XmlTransformation(transformFile))
                 {
                     xt.Apply(doc);
-                    doc.Save(outFile);
+                    if (!isDryRun)
+                        doc.Save(outFile);
                 }
             }
         }
 
-        static public void KeyValue(PropertyFile.Type type, String sourceFile, String destinationFile, SettingFileType transformFile, List<SettingType> settings)
+        static public void KeyValue(PropertyFile.Type type, String sourceFile, String destinationFile, SettingFileType transformFile, List<SettingType> settings, bool isDryRun=false)
         {
             PropertyFile props = new PropertyFile(type, sourceFile);
 
@@ -83,7 +84,7 @@ namespace Synapse.Handlers.Legacy.ConfigFile
                             if (value.Trim().StartsWith(@""""))
                                 value = value.Substring(1, value.Length - 2);
 
-                        if (transformFile._HasEncryptedValues)
+                        if (transformFile._HasEncryptedValues && !isDryRun)
                         {
                             Cipher cipher = new Cipher(config.Default.PassPhrase, config.Default.SaltValue, config.Default.InitVector);
                             String newValue = cipher.Decrypt(value);
@@ -105,10 +106,12 @@ namespace Synapse.Handlers.Legacy.ConfigFile
                 foreach (SettingType setting in settings)
                 {
                     String value = setting.Value.Value;
-                    if (setting.Value._IsEncrypted)
+                    if (setting.Value._IsEncrypted && !isDryRun)
                     {
                         Cipher cipher = new Cipher(config.Default.PassPhrase, config.Default.SaltValue, config.Default.InitVector);
-                        value = cipher.Decrypt(value);
+                        String newValue = cipher.Decrypt(value);
+                        if (!newValue.StartsWith("UNABLE TO DECRYPT"))
+                            value = newValue;
                     }
 
                     if (props.Exists(setting.Section, setting.Key))
@@ -118,10 +121,11 @@ namespace Synapse.Handlers.Legacy.ConfigFile
                 }
             }
 
-            props.Save(destinationFile);
+            if (!isDryRun)
+                props.Save(destinationFile);
         }
 
-        static public void XPath(String sourceFile, String destinationFile, SettingFileType transformFile, List<SettingType> settings)
+        static public void XPath(String sourceFile, String destinationFile, SettingFileType transformFile, List<SettingType> settings, bool isDryRun=false)
         {
             XmlDocument doc = new XmlDocument();
             doc.XmlResolver = null;
@@ -157,7 +161,7 @@ namespace Synapse.Handlers.Legacy.ConfigFile
                             if (value.Trim().StartsWith(@""""))
                                 value = value.Substring(1, value.Length - 2);
 
-                        if (transformFile._HasEncryptedValues)
+                        if (transformFile._HasEncryptedValues && !isDryRun)
                         {
                             Cipher cipher = new Cipher(config.Default.PassPhrase, config.Default.SaltValue, config.Default.InitVector);
                             String newValue = cipher.Decrypt(value);
@@ -179,7 +183,7 @@ namespace Synapse.Handlers.Legacy.ConfigFile
                 if (setting.Value != null)
                 {
                     localValue = setting.Value.Value;
-                    if (setting.Value._IsEncrypted)
+                    if (setting.Value._IsEncrypted && !isDryRun)
                     {
                         Cipher cipher = new Cipher(config.Default.PassPhrase, config.Default.SaltValue, config.Default.InitVector);
                         String newValue = cipher.Decrypt(localValue);
@@ -196,10 +200,11 @@ namespace Synapse.Handlers.Legacy.ConfigFile
                 }
             }
 
-            doc.Save(destinationFile);
+            if (!isDryRun)
+                doc.Save(destinationFile);
         }
 
-        static public void RegexMatch(String sourceFile, String destinationFile, SettingFileType transformFile, List<SettingType> settings)
+        static public void RegexMatch(String sourceFile, String destinationFile, SettingFileType transformFile, List<SettingType> settings, bool isDryRun=false)
         {
             String[] lines = System.IO.File.ReadAllLines(sourceFile);
             String[] xformLines = null;
@@ -230,7 +235,7 @@ namespace Synapse.Handlers.Legacy.ConfigFile
 
                         if (Regex.IsMatch(lines[i], key))
                         {
-                            if (transformFile._HasEncryptedValues)
+                            if (transformFile._HasEncryptedValues && !isDryRun)
                             {
                                 Cipher cipher = new Cipher(config.Default.PassPhrase, config.Default.SaltValue, config.Default.InitVector);
                                 String newValue = cipher.Decrypt(value);
@@ -252,7 +257,7 @@ namespace Synapse.Handlers.Legacy.ConfigFile
                         if (setting.Value != null)
                         {
                             String localValue = setting.Value.Value;
-                            if (setting.Value._IsEncrypted)
+                            if (setting.Value._IsEncrypted && !isDryRun)
                             {
                                 Cipher cipher = new Cipher(config.Default.PassPhrase, config.Default.SaltValue, config.Default.InitVector);
                                 String newValue = cipher.Decrypt(localValue);
@@ -268,7 +273,8 @@ namespace Synapse.Handlers.Legacy.ConfigFile
                 }
             }
 
-            System.IO.File.WriteAllLines(destinationFile, lines);
+            if (!isDryRun)
+                System.IO.File.WriteAllLines(destinationFile, lines);
         }
 
         //
