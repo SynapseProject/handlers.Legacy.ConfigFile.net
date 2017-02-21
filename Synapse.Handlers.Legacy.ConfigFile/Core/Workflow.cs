@@ -31,7 +31,7 @@ namespace Synapse.Handlers.Legacy.ConfigFile
 
 		public WorkflowParameters Parameters { get { return _wfp; } set { _wfp = value as WorkflowParameters; } }
 
-		public void ExecuteAction(bool isDryRun)
+		public void ExecuteAction(HandlerStartInfo startInfo)
 		{
 			string context = "ExecuteAction";
 
@@ -41,7 +41,8 @@ namespace Synapse.Handlers.Legacy.ConfigFile
 				return;
 			}
 
-            OnStepProgress(context, _wfp.Serialize(false));
+            OnStepProgress(context, Utils.CompressXml(startInfo.Parameters));
+
             Stopwatch clock = new Stopwatch();
             clock.Start();
 
@@ -52,7 +53,7 @@ namespace Synapse.Handlers.Legacy.ConfigFile
 
                 if (isValid)
                 {
-                    RunMainWorkflow(isDryRun);
+                    RunMainWorkflow(startInfo.IsDryRun);
                 }
                 else
                 {

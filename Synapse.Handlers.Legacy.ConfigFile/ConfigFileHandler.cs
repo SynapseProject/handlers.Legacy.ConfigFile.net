@@ -14,7 +14,6 @@ using Synapse.Core;
 
 public class ConfigFileHandler : HandlerRuntimeBase
 {
-    int seqNo = 0;
     override public ExecuteResult Execute(HandlerStartInfo startInfo)
     {
         XmlSerializer ser = new XmlSerializer(typeof(WorkflowParameters));
@@ -27,9 +26,7 @@ public class ConfigFileHandler : HandlerRuntimeBase
         wf.OnLogMessage = this.OnLogMessage;
         wf.OnProgress = this.OnProgress;
 
-        seqNo = 0;
-        OnProgress("Execute", "Starting", StatusType.Running, startInfo.InstanceId, seqNo++);
-        wf.ExecuteAction(startInfo.IsDryRun);
+        wf.ExecuteAction(startInfo);
 
         return new ExecuteResult() { Status = StatusType.Complete };
     }

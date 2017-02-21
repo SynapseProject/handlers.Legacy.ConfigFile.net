@@ -64,6 +64,12 @@ namespace Synapse.Handlers.Legacy.ConfigFile
 			return c.Decrypt( value );
 		}
 
+        public static string CompressXml(string xml)
+        {
+            string str = Regex.Replace(xml, @"(>\s*<)", @"><");
+            return str;
+        }
+
         public static string GetServerLongPath(string server, string localServerPath)
         {
             return fs.Path.GetLongPath("\\\\" + server + "\\" + localServerPath.Replace(':', '$'));
