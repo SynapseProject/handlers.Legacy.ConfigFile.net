@@ -19,6 +19,7 @@ namespace Synapse.Handlers.Legacy.ConfigFile
 	public class Workflow
 	{
 		protected WorkflowParameters _wfp = null;
+        protected HandlerStartInfo _startInfo = null;
 
         public Action<string, string, LogLevel, Exception> OnLogMessage;
         public Func<string, string, StatusType, long, int, bool, Exception, bool> OnProgress;
@@ -34,6 +35,8 @@ namespace Synapse.Handlers.Legacy.ConfigFile
 		public void ExecuteAction(HandlerStartInfo startInfo)
 		{
 			string context = "ExecuteAction";
+
+            _startInfo = startInfo;
 
 			string msg = Utils.GetHeaderMessage( string.Format( "Entering Main Workflow."));
 			if( OnStepStarting( context, msg ) )
@@ -69,7 +72,7 @@ namespace Synapse.Handlers.Legacy.ConfigFile
             bool ok = ex == null;
             msg = Utils.GetHeaderMessage(string.Format("End Main Workflow: {0}, Total Execution Time: {1}",
                 ok ? "Complete." : "One or more steps failed.", clock.ElapsedSeconds()));
-            OnProgress(context, msg, ok ? StatusType.Complete : StatusType.Failed, 0, int.MaxValue, false, ex);
+            OnProgress(context, msg, ok ? StatusType.Complete : StatusType.Failed, _startInfo.InstanceId, int.MaxValue, false, ex);
 
         }
 
@@ -202,7 +205,7 @@ namespace Synapse.Handlers.Legacy.ConfigFile
 		/// <returns>AdapterProgressCancelEventArgs.Cancel value.</returns>
 		bool OnStepStarting(string context, string message)
 		{
-            OnProgress(context, message, StatusType.Running, 0, _cheapSequence++, false, null);
+            OnProgress(context, message, StatusType.Running, _startInfo.InstanceId, _cheapSequence++, false, null);
             return false;
         }
 
@@ -214,7 +217,7 @@ namespace Synapse.Handlers.Legacy.ConfigFile
         /// <param name="message">Descriptive message.</param>
         protected void OnStepProgress(string context, string message)
 		{
-            OnProgress(context, message, StatusType.Running, 0, _cheapSequence++, false, null);
+            OnProgress(context, message, StatusType.Running, _startInfo.InstanceId, _cheapSequence++, false, null);
 		}
 
 		/// <summary>
@@ -225,7 +228,7 @@ namespace Synapse.Handlers.Legacy.ConfigFile
 		/// <param name="message">Descriptive message.</param>
 		protected void OnStepFinished(string context, string message)
 		{
-            OnProgress(context, message, StatusType.Running, 0, _cheapSequence++, false, null);
+            OnProgress(context, message, StatusType.Running, _startInfo.InstanceId, _cheapSequence++, false, null);
 		}
 		#endregion
 
