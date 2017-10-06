@@ -30,4 +30,32 @@ public class ConfigFileHandler : HandlerRuntimeBase
 
         return new ExecuteResult() { Status = StatusType.Complete };
     }
+
+    public override object GetConfigInstance()
+    {
+        return null;
+    }
+
+    public override object GetParametersInstance()
+    {
+        WorkflowParameters wfp = new WorkflowParameters();
+
+        wfp.Files = new List<FileType>();
+        FileType file = new FileType();
+        file.Type = ConfigType.KeyValue;
+        file.RootDirectory = @"C:\Source";
+        file.Source = @"MyApp\Development\java.properties.Development";
+        file.Destination = @"MyApp\Development\java.properties";
+        file.SettingsFile = new SettingFileType();
+        file.SettingsFile.CreateIfNotFoundStr = "true";
+        file.SettingsFile.HasEncryptedValuesStr = "false";
+        file.SettingsFile.Value = @"MyApp\Development\Development.settings.csv";
+        file.CopySourceStr = "true";
+
+        wfp.Files.Add( file );
+
+        String xml = wfp.Serialize( false );
+        xml = xml.Substring( xml.IndexOf( "<" ) );
+        return xml;
+    }
 }
